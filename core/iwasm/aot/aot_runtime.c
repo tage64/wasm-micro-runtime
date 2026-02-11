@@ -928,8 +928,8 @@ tables_instantiate(AOTModuleInstance *module_inst, AOTModule *module,
          */
 #if WASM_ENABLE_GC == 0
         for (j = 0; j < length; j++) {
-            tbl_inst->elems[base_offset + j] =
-                table_seg->init_values[j].u.unary.v.ref_index;
+            STORE_I64(&tbl_inst->elems[base_offset + j],
+                table_seg->init_values[j].u.unary.v.ref_index);
         }
 #endif
     }
