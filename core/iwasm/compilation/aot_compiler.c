@@ -4018,6 +4018,28 @@ verify_module(AOTCompContext *comp_ctx)
     return true;
 }
 
+static void
+handle_unaligned_mem_accesses(LLVMModuleRef module)
+{
+    LLVMValueRef func = LLVMGetFirstFunction(module);
+    while (func) {
+        LLVMBasicBlockRef bb = LLVMGetFirstBasicBlock(func);
+        while (bb) {
+            LLVMValueRef inst = LLVMGetFirstInstruction(bb);
+            while (inst) {
+                if (LLVMIsALoadInst(inst)) {
+                    LLVMSetAlignment(inst, 1);
+                } else if (LLVMIsAStoreInst(inst)) {
+                    LLVMSetAlignment(inst, 1);
+                }
+                inst = LLVMGetNextInstruction(inst);
+            }
+            bb = LLVMGetNextBasicBlock(bb);
+        }
+        func = LLVMGetNextFunction(func);
+    }
+}
+
 bool
 aot_compile_wasm(AOTCompContext *comp_ctx)
 {
@@ -4037,6 +4059,8 @@ aot_compile_wasm(AOTCompContext *comp_ctx)
 #if WASM_ENABLE_DEBUG_AOT != 0
     LLVMDIBuilderFinalize(comp_ctx->debug_builder);
 #endif
+
+    handle_unaligned_mem_accesses(comp_ctx->module);
 
     /* Disable LLVM module verification for jit mode to speedup
        the compilation process */
